@@ -4,14 +4,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.Arrays;
 
 public class PassOne {
 
 	public static void main(String[] args) {
-		ArrayList<CodeLine> sicFile = readSICFile(new File("C:\\Users\\micha_000\\Documents\\Programs\\Project3\\Testfile.txt"));
-		ObjectTable opLines = readSICOPS(new File("C:\\Users\\micha_000\\Documents\\Programs\\Project3\\SICOPS.txt"));
+		ArrayList<CodeLine> sicFile = readSICFile(new File(args[0]));
+		SymbolTable opLines = readSICOPS(new File(args[1]));
 		sicFile = calculateLocations(sicFile, opLines);
+		printLocations(sicFile);
 	}
 	
 	/**
@@ -92,10 +92,10 @@ public class PassOne {
 
 	/**
 		* Reads through sicops file line by line and creates an Operation object for each line
-		* Puts each operation in the ObjectTable (HashTable)
+		* Puts each operation in the SymbolTable (HashTable)
 		*/
-	public static ObjectTable readSICOPS(File file) {
-		ObjectTable ops = new ObjectTable(229);
+	public static SymbolTable readSICOPS(File file) {
+		SymbolTable ops = new SymbolTable(229);
 		try {
 			Scanner sc = new Scanner(file);
 			while(sc.hasNextLine()) {
@@ -111,7 +111,7 @@ public class PassOne {
 					value = line.substring(8,10);
 					format = Integer.valueOf(line.substring(14,15));
 					Operation oLine = new Operation(operation, value, format);
-					System.out.println(ops.put(oLine));
+					ops.put(oLine);
 				}
 			}
 		} catch (FileNotFoundException e) {
@@ -124,7 +124,7 @@ public class PassOne {
 		* Goes through each item in the arraylist containing lines of code
 		* Examines the format of each operation
 		*/
-	public static ArrayList<CodeLine> calculateLocations(ArrayList<CodeLine> sicFile, ObjectTable table) {
+	public static ArrayList<CodeLine> calculateLocations(ArrayList<CodeLine> sicFile, SymbolTable table) {
 		int pc = 256; // 100 in hex
 		for(int i = 0; i < sicFile.size(); i++) {
 			sicFile.get(i).location = pc;
@@ -140,128 +140,23 @@ public class PassOne {
 				}
 			}
 		}
-		for(int i = 0; i < sicFile.size(); i++) {
-			sicFile.get(i).printStr();
-		}
-
 		return sicFile;
 	}
 
-}
+	public static void printLocations(ArrayList<CodeLine> sicFile) {
+		System.out.println("****************************************************");
+		System.out.println("* Michael Turner Pass One                          *");
+		System.out.println("*                                                  *");
+		System.out.println("****************************************************");
+		System.out.println("Line - Address - Instruction");
 
-class Operation {
-	public String operation;
-	public String value;
-	public int format;
-
-	public Operation(String operation, String value, int format) {
-		this.operation = operation;
-		this.value = value;
-		this.format = format;
-	}
-
-	public void printStr() {
-		System.out.println(operation + "," + value + "," + format);
-	}
-}
-
-class CodeLine {
-	public String label;
-	public boolean plus;
-	public String operation;
-	public String option;
-	public String operand;
-	public String comment;
-	public int location;
-	public String error;
-	
-	public CodeLine(String label, boolean plus, String operation, String option, String operand, String comment) {
-		this.label = label;
-		this.plus = plus;
-		this.operation = operation;
-		this.option = option;
-		this.operand = operand;
-		this.comment = comment;
-	}
-
-	public void printStr() {
-		if(error != null) {
-			System.out.println(error);
-		} else {
-			System.out.println(Integer.toHexString(location) + "," + label + "," + plus + "," + operation + "," + option + "," + operand + "," + comment);
-		}
-	}
-}
-
-/**
-	* HashTable that stores Operation objects based on operation value
-	* 
-	*/
-
-class ObjectTable {
-	Operation[] hashTable;
-	int arraySize;
-
-	//Constructor
-	public ObjectTable(int size) {
-		arraySize = size;
-		hashTable = new Operation[size];
-		Arrays.fill(hashTable, null);
-	}
-	
-	//Finds the hash value of the string by:
-	// Multiplying each character by 31
-	// adding the previous hash value
-	// modding it by the array size
-	// and repeating for every character in the string
-	public int hashFunction(String str) {
-		int hash = 0;
-		
-		char[] ch = str.toCharArray();
-		for(char c : ch) {
-			hash = (31 * c + hash) % arraySize;
-		}
-
-		return hash;
-	}
-
-	//Place a string in the hash table
-	public String put(Operation op) {
-		int hash = hashFunction(op.operation);
-		if (hashTable[hash] == null) {
-			hashTable[hash] = op;
-			return "Placed " + op.operation + " at location " + hash;
-		} else {
-			while(hashTable[hash] != null) {
-				if (hashTable[hash].operation.equals(op.operation)) {
-					return "ERROR: " + op.operation + " already exists at position " + hash;
-				}
-				hash = (hash + 1) % arraySize;
-			}
-			hashTable[hash] = op;
-			return "Placed " + op.operation + " at location " + hash;
+		for(int i = 0; i < sicFile.size(); i++) {
+			CodeLine line = sicFile.get(i);
+			String format = String.format("%%0%dd", 4);
+			String result = String.format(format, i);
+			System.out.println(result + " - " + line.getHexLocation() + " - " + line.getInstruction());
 		}
 	}
 
-	//Find the location of a string in the hash table
-	public Operation find(String op) {
-		int hash = hashFunction(op);
-		System.out.println(hash);
-		if (hashTable[hash] != null) {
-			hashTable[hash].printStr();
-			String result = hashTable[hash].operation;
-			while (true) {
-				if (result.equals(op)) {
-					return hashTable[hash];
-				} else {
-					hash = (hash + 1) % arraySize;
-					if (hashTable[hash] == null) {
-						return null;
-					}
-				}
-			}
-		} else {
-			return null;
-		}
-	}
 }
+
