@@ -2,6 +2,7 @@ ADDRESS   START    100
 NOW      +LDB     #BEGIN              load base register 
 XXX       BASE     BEGIN              tell assembler  
 YYY       LDA      BE                 A <- (m..m+2)    
+SDFA			ADDR     A,T
 EN        RESW     4                  
 BE        WORD     2                              
 BEGIN     RESW     1
@@ -9,4 +10,4 @@ JUNK      RESW     2200
 THERE     RESW     1                              
 ZZZ       LDA      JUNK                               
 MMM       STA      THERE                              
-          END      NOW                              
+          END      NOW

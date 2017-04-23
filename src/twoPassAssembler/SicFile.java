@@ -125,65 +125,71 @@ public class SicFile {
 				sicFile.get(i).setOpCode("");
 				break;
 			case "BASE":
+				// Set the base value equal to the value at the operand
 				base = findLabelLocation(line.operand);
 			default:
+				// Find the operation object from the symbol table
 				Operation op = table.find(line.operation);
-				// System.out.println(line.operation);
 				if (op != null) {
-					int[] nixbpe = new int[6];
+					if (op.format == 2) {
+						char[] registers = line.operand.toCharArray();
 
-					if (line.option.equals("#")) {
-						nixbpe[1] = 1;
-					} else if (line.option.equals("@")) {
-						nixbpe[0] = 1;
 					} else {
-						nixbpe[0] = 1;
-						nixbpe[1] = 1;
-					}
-					int first2 = Integer.parseInt(op.value, 16) + arrayToDecimal(Arrays.copyOfRange(nixbpe, 0, 2));
-					opCode += Integer.toHexString(first2);
-					opCode = "00".substring(opCode.length()) + opCode;
+						int[] nixbpe = new int[6];
 
-					if (line.label.contains(",X")) {
-						nixbpe[2] = 1;
-					}
-					int disp = 0;
-					String label = sicFile.get(i).operand;
-					int labelLocation = findLabelLocation(label);
-					if (line.plus) {
-						nixbpe[5] = 1;
-						disp = labelLocation;
-					} else {
-						disp = labelLocation - pc;
-						if (disp > 2048 || disp < -2047) {
-							nixbpe[3] = 1;
-							disp = labelLocation - base;
+						if (line.option.equals("#")) {
+							nixbpe[1] = 1;
+						} else if (line.option.equals("@")) {
+							nixbpe[0] = 1;
 						} else {
-							nixbpe[4] = 1;
+							nixbpe[0] = 1;
+							nixbpe[1] = 1;
 						}
-					}
-					if (first2 == 1) {
-						disp = Integer.valueOf(label);
-					}
-					opCode += Integer.toHexString(arrayToDecimal(Arrays.copyOfRange(nixbpe, 2, 6)));
-					System.out.println(Integer.toHexString(arrayToDecimal(Arrays.copyOfRange(nixbpe, 2, 6))));
+						int first2 = Integer.parseInt(op.value, 16) + arrayToDecimal(Arrays.copyOfRange(nixbpe, 0, 2));
+						opCode += Integer.toHexString(first2);
+						opCode = "00".substring(opCode.length()) + opCode;
 
-					if (label.contains(",X")) {
-						label = label.substring(0, label.length() - 2);
-					}
+						if (line.label.contains(",X")) {
+							nixbpe[2] = 1;
+						}
+						int disp = 0;
+						String label = sicFile.get(i).operand;
+						int labelLocation = findLabelLocation(label);
+						if (line.plus) {
+							nixbpe[5] = 1;
+							disp = labelLocation;
+						} else {
+							disp = labelLocation - pc;
+							if (disp > 2048 || disp < -2047) {
+								nixbpe[3] = 1;
+								disp = labelLocation - base;
+							} else {
+								nixbpe[4] = 1;
+							}
+						}
+						if (first2 == 1) {
+							disp = Integer.valueOf(label);
+						}
+						opCode += Integer.toHexString(arrayToDecimal(Arrays.copyOfRange(nixbpe, 2, 6)));
+						System.out.println(Integer.toHexString(arrayToDecimal(Arrays.copyOfRange(nixbpe, 2, 6))));
 
-					String dispStr = String.valueOf(Integer.toHexString(disp));
-					if (disp < 0) {
-						dispStr = dispStr.substring(5);
-					}
+						if (label.contains(",X")) {
+							label = label.substring(0, label.length() - 2);
+						}
 
-					if (sicFile.get(i).plus) {
-						dispStr = "00000".substring(dispStr.length()) + dispStr;
-					} else {
-						dispStr = "000".substring(dispStr.length()) + dispStr;
+						String dispStr = String.valueOf(Integer.toHexString(disp));
+						if (disp < 0) {
+							dispStr = dispStr.substring(5);
+						}
+
+						if (sicFile.get(i).plus) {
+							dispStr = "00000".substring(dispStr.length()) + dispStr;
+						} else {
+							dispStr = "000".substring(dispStr.length()) + dispStr;
+						}
+						System.out.println(dispStr);
+						opCode += dispStr;
 					}
-					System.out.println(dispStr);
-					opCode += dispStr;
 				}
 				sicFile.get(i).setOpCode(opCode);
 				break;
